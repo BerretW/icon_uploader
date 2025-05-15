@@ -1,23 +1,86 @@
 <!doctype html>
-<html>
-<head><title>Item Ikony</title></head>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Item Ikony</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; display: flex; justify-content: center; }
+    .container { width: 100%; max-width: 900px; }
+    .search-box { margin-bottom: 1rem; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    .table img { max-height: 48px; }
+    .upload-form input[type="file"] { display: block; margin-top: 0.5rem; }
+    .upload-form button { margin-top: 0.5rem; }
+    .pagination { margin-top: 1rem; text-align: center; }
+    .pagination a { margin: 0 5px; text-decoration: none; }
+    @media (max-width: 600px) {
+      .table, .table thead, .table tbody, .table th, .table td, .table tr {
+        display: block;
+      }
+      .table tr { margin-bottom: 1rem; }
+      .table td { border: none; position: relative; padding-left: 50%; }
+      .table td:before {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 45%;
+        padding-left: 0.5rem;
+        font-weight: bold;
+      }
+      .table td:nth-of-type(1):before { content: "Item"; }
+      .table td:nth-of-type(2):before { content: "Label"; }
+      .table td:nth-of-type(3):before { content: "Ikona"; }
+      .table td:nth-of-type(4):before { content: "Nahrát"; }
+    }
+  </style>
+</head>
 <body>
-<form method="get">
+<div class="container">
+<h1>Správa ikon itemů</h1>
+<form method="get" class="search-box">
   <input type="text" name="search" value="{{ search }}" placeholder="Hledat item...">
   <button type="submit">Hledat</button>
+  <a href="/logout" style="float:right">Odhlásit</a>
 </form>
-<hr>
-{% for item in items %}
-  <div>
-    <strong>{{ item.label }}</strong> ({{ item.item }})
-    {% if item.image %}
-      <img src="/static/icons/{{ item.image }}" width="48">
-    {% endif %}
-    <form action="/upload/{{ item.item }}" method="post" enctype="multipart/form-data">
-      <input type="file" name="icon" required>
-      <button type="submit">Nahrát</button>
-    </form>
-  </div>
-{% endfor %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Label</th>
+      <th>Ikona</th>
+      <th>Nahrát novou</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for item in items %}
+    <tr>
+      <td>{{ item.item }}</td>
+      <td>{{ item.label }}</td>
+      <td>
+        {% set filename = item.image %}
+        {% if filename and filename in icons %}
+          <img src="/image/{{ filename }}" alt="{{ item.item }}">
+        {% else %}
+          Žádná ikona
+        {% endif %}
+      </td>
+      <td>
+        <form class="upload-form" action="/upload/{{ item.item }}" method="post" enctype="multipart/form-data">
+          <input type="file" name="icon" required>
+          <button type="submit">Nahrát</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<div class="pagination">
+  {% if page > 1 %}<a href="?search={{ search }}&page={{ page - 1 }}">&laquo; Předchozí</a>{% endif %}
+  <span>Stránka {{ page }}</span>
+  {% if has_next %}<a href="?search={{ search }}&page={{ page + 1 }}">Další &raquo;</a>{% endif %}
+</div>
+</div>
 </body>
 </html>
