@@ -14,13 +14,15 @@
       background-color: #1e1e1e;
     }
     table tr:nth-child(even) {
-      background-color: #ff0000;
+      background-color: #2c2c2c;
     }
     table tr:nth-child(odd) {
-      background-color: #fc940d;
+      background-color: #e4990e;
     }
     .table td, .table th {
+      font-style: oblique;
       color: #000000;
+      font-weight: bold;
     }
     a.button.is-danger {
       background-color: #ff3860;
@@ -56,10 +58,36 @@
       </div>
     </form>
 
+    <!-- stránkování nahoře -->
+    <nav class="pagination is-centered mb-3" role="navigation">
+      <ul class="pagination-list">
+        {% if page > 1 %}
+          <li><a class="pagination-previous" href="?search={{ search }}{% if filter_missing %}&filter=missing{% endif %}&page={{ page - 1 }}">« Předchozí</a></li>
+        {% endif %}
+        <li>
+          <form method="get" class="dropdown is-active" style="display:inline-block">
+            <input type="hidden" name="search" value="{{ search }}">
+            {% if filter_missing %}<input type="hidden" name="filter" value="missing">{% endif %}
+            <div class="select is-small">
+              <select name="page" onchange="this.form.submit()">
+                {% for i in range(1, (page + 5) if has_next else page + 1) %}
+                  <option value="{{ i }}" {% if i == page %}selected{% endif %}>Stránka {{ i }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </li>
+        {% if has_next %}
+          <li><a class="pagination-next" href="?search={{ search }}{% if filter_missing %}&filter=missing{% endif %}&page={{ page + 1 }}">Další »</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+
     <div class="table-container">
       <table class="table is-fullwidth is-bordered is-striped">
         <thead>
           <tr>
+            <th>ID</th>
             <th>Item</th>
             <th>Label</th>
             <th>Ikona</th>
@@ -69,6 +97,7 @@
         <tbody>
         {% for item in items %}
           <tr>
+            <td>{{ item.id }}</td>
             <td>{{ item.item }}</td>
             <td>{{ item.label }}</td>
             <td>
@@ -83,7 +112,7 @@
               <form class="upload-form" action="/upload/{{ item.item }}" method="post" enctype="multipart/form-data">
                 <div class="field is-grouped">
                   <div class="control">
-                    <input class="input" type="file" name="icon" required>
+                    <input class="input" type="file" name="icon" accept="image/png,image/jpeg,image/webp" required>
                   </div>
                   <div class="control">
                     <button class="button is-success" type="submit">Nahrát</button>
@@ -97,18 +126,59 @@
       </table>
     </div>
 
-    <nav class="pagination is-centered" role="navigation">
+    <!-- stránkování dole -->
+    <nav class="pagination is-centered mt-4" role="navigation">
       <ul class="pagination-list">
         {% if page > 1 %}
           <li><a class="pagination-previous" href="?search={{ search }}{% if filter_missing %}&filter=missing{% endif %}&page={{ page - 1 }}">« Předchozí</a></li>
         {% endif %}
-        <li><span class="pagination-link is-current">Stránka {{ page }}</span></li>
+        <li>
+          <form method="get" class="dropdown is-active" style="display:inline-block">
+            <input type="hidden" name="search" value="{{ search }}">
+            {% if filter_missing %}<input type="hidden" name="filter" value="missing">{% endif %}
+            <div class="select is-small">
+              <select name="page" onchange="this.form.submit()">
+                {% for i in range(1, (page + 5) if has_next else page + 1) %}
+                  <option value="{{ i }}" {% if i == page %}selected{% endif %}>Stránka {{ i }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </li>
         {% if has_next %}
           <li><a class="pagination-next" href="?search={{ search }}{% if filter_missing %}&filter=missing{% endif %}&page={{ page + 1 }}">Další »</a></li>
         {% endif %}
       </ul>
     </nav>
+
   </div>
 </section>
+
+<!-- drag & drop skript -->
+<script>
+  document.querySelectorAll('.upload-form').forEach(form => {
+    const fileInput = form.querySelector('input[type="file"]');
+    const dropZone = form.closest('tr').querySelector('td:nth-child(5)');
+
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.style.background = '#363636';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.background = '';
+    });
+
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.style.background = '';
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        form.submit(); // auto-submit
+      }
+    });
+  });
+</script>
 </body>
 </html>

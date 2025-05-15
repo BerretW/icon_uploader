@@ -88,12 +88,11 @@ def index():
         cur.execute(f"SELECT COUNT(*) AS count FROM items {where}", params)
         total = cur.fetchone()['count']
 
-        cur.execute(f"SELECT item, label, image FROM items {where} LIMIT %s OFFSET %s", params + [per_page, offset])
+        cur.execute(f"SELECT id, item, label, image FROM items {where} ORDER BY id DESC LIMIT %s OFFSET %s", params + [per_page, offset])
         items = cur.fetchall()
-        if filter_missing:
-            items = [item for item in items if not item['image'] or item['image'] not in icons]
     conn.close()
 
+    # Načti dostupné ikony
     icons = {}
     for path in upload_dirs:
         try:
@@ -102,6 +101,10 @@ def index():
                     icons[f] = os.path.join(path, f)
         except FileNotFoundError:
             pass
+
+    # Pokud filtrujeme chybějící soubory, ověř existenci fyzicky
+    if filter_missing:
+        items = [item for item in items if not item['image'] or item['image'] not in icons]
 
     has_next = offset + per_page < total
 
@@ -112,6 +115,7 @@ def index():
                            page=page,
                            has_next=has_next,
                            filter_missing=filter_missing)
+
 
 @app.route('/upload/<item>', methods=['POST'])
 @login_required
