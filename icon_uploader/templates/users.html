@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Správa uživatelů</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
+<body>
+<section class="section">
+  <div class="container">
+    <h1 class="title">Správa uživatelů</h1>
+
+    <form method="post" class="box">
+      <div class="field">
+        <label class="label">Nový uživatel</label>
+        <div class="control">
+          <input class="input" type="text" name="username" placeholder="Uživatelské jméno" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Heslo</label>
+        <div class="control">
+          <input class="input" type="password" name="password" placeholder="Heslo" required>
+        </div>
+      </div>
+
+      <div class="field is-grouped">
+        <div class="control">
+          <button class="button is-primary" type="submit" name="action" value="add">Přidat</button>
+        </div>
+        <div class="control">
+          <a href="/" class="button is-light">Zpět</a>
+        </div>
+      </div>
+    </form>
+
+    <h2 class="subtitle">Existující uživatelé</h2>
+    <table class="table is-fullwidth">
+      <thead>
+        <tr>
+          <th>Uživatel</th>
+          <th>Nové heslo</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for username in users.keys() %}
+        <tr>
+          <td>
+            {{ username }}
+            {% if username == session['user'] %}<span class="tag is-info is-light">přihlášený</span>{% endif %}
+            {% if username == 'admin' %}<span class="tag is-warning is-light">admin</span>{% endif %}
+          </td>
+          <td>
+            {% if username != 'admin' %}
+            <form method="post" style="display:inline">
+              <input type="hidden" name="username" value="{{ username }}">
+              <input class="input is-small" type="password" name="new_password" placeholder="Nové heslo">
+              <button class="button is-link is-small" name="action" value="change">Změnit</button>
+            </form>
+            {% endif %}
+          </td>
+          <td>
+            {% if username != 'admin' %}
+            <form method="post" style="display:inline">
+              <input type="hidden" name="username" value="{{ username }}">
+              <button class="button is-danger is-small" name="action" value="delete" onclick="return confirm('Opravdu smazat uživatele {{ username }}?')">Smazat</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+</body>
+</html>

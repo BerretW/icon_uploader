@@ -1,13 +1,40 @@
 <!doctype html>
-<html>
-<head><title>Přihlášení</title></head>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Přihlášení</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
 <body>
-<h2>Login</h2>
-{% if error %}<p style="color:red">{{ error }}</p>{% endif %}
-<form method="post">
-  <input type="text" name="username" placeholder="Uživatel" required><br>
-  <input type="password" name="password" placeholder="Heslo" required><br>
-  <button type="submit">Přihlásit</button>
-</form>
+<section class="section">
+  <div class="container" style="max-width: 400px;">
+    <h1 class="title has-text-centered">Přihlášení</h1>
+    {% if error %}
+      <div class="notification is-danger is-light">{{ error }}</div>
+    {% endif %}
+    <form method="post" class="box">
+      <div class="field">
+        <label class="label">Uživatelské jméno</label>
+        <div class="control">
+          <input class="input" type="text" name="username" placeholder="Zadejte jméno" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Heslo</label>
+        <div class="control">
+          <input class="input" type="password" name="password" placeholder="Zadejte heslo" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="control">
+          <button class="button is-link is-fullwidth" type="submit">Přihlásit se</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
 </body>
 </html>

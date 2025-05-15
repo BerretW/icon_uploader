@@ -3,84 +3,112 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Item Ikony</title>
+  <title>Správa ikon itemů</title>
+  <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; margin: 2rem; display: flex; justify-content: center; }
-    .container { width: 100%; max-width: 900px; }
-    .search-box { margin-bottom: 1rem; }
-    .table { width: 100%; border-collapse: collapse; }
-    .table th, .table td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
-    .table img { max-height: 48px; }
-    .upload-form input[type="file"] { display: block; margin-top: 0.5rem; }
-    .upload-form button { margin-top: 0.5rem; }
-    .pagination { margin-top: 1rem; text-align: center; }
-    .pagination a { margin: 0 5px; text-decoration: none; }
-    @media (max-width: 600px) {
-      .table, .table thead, .table tbody, .table th, .table td, .table tr {
-        display: block;
-      }
-      .table tr { margin-bottom: 1rem; }
-      .table td { border: none; position: relative; padding-left: 50%; }
-      .table td:before {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 45%;
-        padding-left: 0.5rem;
-        font-weight: bold;
-      }
-      .table td:nth-of-type(1):before { content: "Item"; }
-      .table td:nth-of-type(2):before { content: "Label"; }
-      .table td:nth-of-type(3):before { content: "Ikona"; }
-      .table td:nth-of-type(4):before { content: "Nahrát"; }
+    body {
+      background-color: #121212;
+      color: #f5f5f5;
+    }
+    .box {
+      background-color: #1e1e1e;
+    }
+    table tr:nth-child(even) {
+      background-color: #ff0000;
+    }
+    table tr:nth-child(odd) {
+      background-color: #fc940d;
+    }
+    .table td, .table th {
+      color: #000000;
+    }
+    a.button.is-danger {
+      background-color: #ff3860;
+    }
+    input[type="file"] {
+      background: white;
     }
   </style>
 </head>
 <body>
-<div class="container">
-<h1>Správa ikon itemů</h1>
-<form method="get" class="search-box">
-  <input type="text" name="search" value="{{ search }}" placeholder="Hledat item...">
-  <button type="submit">Hledat</button>
-  <a href="/logout" style="float:right">Odhlásit</a>
-</form>
-<table class="table">
-  <thead>
-    <tr>
-      <th>Item</th>
-      <th>Label</th>
-      <th>Ikona</th>
-      <th>Nahrát novou</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for item in items %}
-    <tr>
-      <td>{{ item.item }}</td>
-      <td>{{ item.label }}</td>
-      <td>
-        {% set filename = item.image %}
-        {% if filename and filename in icons %}
-          <img src="/image/{{ filename }}" alt="{{ item.item }}">
-        {% else %}
-          Žádná ikona
+<section class="section">
+  <div class="container">
+    <h1 class="title has-text-white">Správa ikon itemů</h1>
+
+    <form method="get" class="box">
+      <div class="field is-grouped is-grouped-multiline">
+        <div class="control is-expanded">
+          <input class="input" type="text" name="search" value="{{ search }}" placeholder="Hledat item...">
+        </div>
+        <div class="control">
+          <label class="checkbox has-text-white">
+            <input type="checkbox" name="filter" value="missing" {% if filter_missing %}checked{% endif %}>
+            Pouze bez ikon
+          </label>
+        </div>
+        <div class="control">
+          <button class="button is-link" type="submit">Filtrovat</button>
+        </div>
+        <div class="control" style="margin-left:auto;">
+          <a class="button is-warning" href="/users">Uživatelé</a>
+          <a class="button is-danger" href="/logout">Odhlásit</a>
+        </div>
+      </div>
+    </form>
+
+    <div class="table-container">
+      <table class="table is-fullwidth is-bordered is-striped">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Label</th>
+            <th>Ikona</th>
+            <th>Nahrát novou</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for item in items %}
+          <tr>
+            <td>{{ item.item }}</td>
+            <td>{{ item.label }}</td>
+            <td>
+              {% set filename = item.image %}
+              {% if filename and filename in icons %}
+                <img src="/image/{{ filename }}" alt="{{ item.item }}" style="max-height: 48px;">
+              {% else %}
+                <span class="tag is-danger">Žádná ikona</span>
+              {% endif %}
+            </td>
+            <td>
+              <form class="upload-form" action="/upload/{{ item.item }}" method="post" enctype="multipart/form-data">
+                <div class="field is-grouped">
+                  <div class="control">
+                    <input class="input" type="file" name="icon" required>
+                  </div>
+                  <div class="control">
+                    <button class="button is-success" type="submit">Nahrát</button>
+                  </div>
+                </div>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="pagination is-centered" role="navigation">
+      <ul class="pagination-list">
+        {% if page > 1 %}
+          <li><a class="pagination-previous" href="?search={{ search }}{% if filter_missing %}&filter=missing{% endif %}&page={{ page - 1 }}">« Předchozí</a></li>
         {% endif %}
-      </td>
-      <td>
-        <form class="upload-form" action="/upload/{{ item.item }}" method="post" enctype="multipart/form-data">
-          <input type="file" name="icon" required>
-          <button type="submit">Nahrát</button>
-        </form>
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-<div class="pagination">
-  {% if page > 1 %}<a href="?search={{ search }}&page={{ page - 1 }}">&laquo; Předchozí</a>{% endif %}
-  <span>Stránka {{ page }}</span>
-  {% if has_next %}<a href="?search={{ search }}&page={{ page + 1 }}">Další &raquo;</a>{% endif %}
-</div>
-</div>
+        <li><span class="pagination-link is-current">Stránka {{ page }}</span></li>
+        {% if has_next %}
+          <li><a class="pagination-next" href="?search={{ search }}{% if filter_missing %}&filter=missing{% endif %}&page={{ page + 1 }}">Další »</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+</section>
 </body>
 </html>
