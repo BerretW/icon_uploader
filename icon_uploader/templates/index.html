@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head><title>Item Ikony</title></head>
+<body>
+<form method="get">
+  <input type="text" name="search" value="{{ search }}" placeholder="Hledat item...">
+  <button type="submit">Hledat</button>
+</form>
+<hr>
+{% for item in items %}
+  <div>
+    <strong>{{ item.label }}</strong> ({{ item.item }})
+    {% if item.image %}
+      <img src="/static/icons/{{ item.image }}" width="48">
+    {% endif %}
+    <form action="/upload/{{ item.item }}" method="post" enctype="multipart/form-data">
+      <input type="file" name="icon" required>
+      <button type="submit">Nahrát</button>
+    </form>
+  </div>
+{% endfor %}
+</body>
+</html>
