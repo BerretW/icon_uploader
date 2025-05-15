@@ -88,7 +88,7 @@ def index():
         cur.execute(f"SELECT COUNT(*) AS count FROM items {where}", params)
         total = cur.fetchone()['count']
 
-        cur.execute(f"SELECT id, item, label, image FROM items {where} ORDER BY id DESC LIMIT %s OFFSET %s", params + [per_page, offset])
+        cur.execute(f"SELECT * FROM items {where} ORDER BY id DESC LIMIT %s OFFSET %s", params + [per_page, offset])
         items = cur.fetchall()
     conn.close()
 
@@ -178,7 +178,31 @@ def manage_users():
                 log_user_action("Změna hesla", username)
 
     return render_template('users.html', users=users, current_user=session.get('user'), error=error)
+from flask import jsonify
 
+@app.route('/update/<item>', methods=['POST'])
+@login_required
+def update_item(item):
+    label = request.form.get('label', '').strip()
+    weight = request.form.get('weight', '').replace(',', '.')
+    desc = request.form.get('desc', '').strip()
+
+    try:
+        weight = float(weight)
+    except ValueError:
+        return jsonify(success=False, message="Neplatná váha")
+
+    conn = get_db_connection()
+    with conn.cursor() as cur:
+        cur.execute("""
+            UPDATE items
+            SET label=%s, weight=%s, `desc`=%s, updated_at=NOW()
+            WHERE item=%s
+        """, (label, weight, desc, item))
+    conn.commit()
+    conn.close()
+
+    return jsonify(success=True)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

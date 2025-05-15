@@ -1,0 +1,10 @@
+{
+  "db": {
+    "host": "localhost",
+    "user": "westhaven",
+    "password": "Jrqhxi01whCPRISmobYYSWs",
+    "database": "westhaven_main",
+    "port": 3336
+  },
+  "upload_dirs": ["/data/main","/data/dev"]
+}
