@@ -185,8 +185,10 @@ def index():
     if framework == "esx":
         for item in items:
             item['item'] = item['name']
-            # vytvoř image podle name.png
-            item['image'] = f"{item['name']}.png"
+            # vytvoř image podle name.png pokud item.image neexistuje
+            if not item['image']:
+                item['image'] = f"{item['name']}.png"
+            # item['image'] = f"{item['name']}.png"
 
     has_next = offset + per_page < total
 
