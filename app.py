@@ -14,7 +14,7 @@ items_table = os.getenv("DB_TABLE", "items")
 order_collumn = os.getenv("ORDER_COLUMN", "label")
 CONFIG_PATH = os.path.join("config", "config.json")
 USERS_PATH = os.path.join("config", "users.json")
-
+can_add_item = os.getenv("CAN_ADD_ITEM", "false").lower() == "true"
 
 lang = os.getenv("LANG", "cs")
 
@@ -197,6 +197,7 @@ def index():
                            page=page,
                            has_next=has_next,
                            filter_missing=filter_missing,
+                           can_add_item=can_add_item,
                             T=T)
 
 
@@ -287,6 +288,41 @@ def update_item(item):
     conn.close()
 
     return jsonify(success=True)
+
+
+@app.route('/add-item', methods=['POST'])
+@login_required
+def add_item():
+    if not can_add_item:
+        return abort(403)
+
+    item = request.form.get('item', '').strip()
+    label = request.form.get('label', '').strip()
+    weight = request.form.get('weight', '0.25').replace(',', '.')
+    desc = request.form.get('desc', 'nice item').strip()
+
+    try:
+        weight = float(weight)
+    except ValueError:
+        return redirect(url_for('index'))
+
+    conn = get_db_connection()
+    with conn.cursor() as cur:
+        if framework == "vorp":
+            cur.execute("""
+                INSERT INTO items (item, label, weight, `desc`, created_at)
+                VALUES (%s, %s, %s, %s, NOW())
+            """, (item, label, weight, desc))
+        elif framework == "esx":
+            cur.execute("""
+                INSERT INTO items (name, label, weight)
+                VALUES (%s, %s, %s)
+            """, (item, label, int(weight)))  # ESX má weight jako INT
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('index'))
+
 
 # if __name__ == '__main__':
 #     port = int(os.getenv("PORT", 5000))
