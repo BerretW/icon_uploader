@@ -8,14 +8,85 @@ from functools import wraps
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'supertajnyklic'
+app.secret_key = os.getenv("SECRET", "default-dev-key")
+framework = os.getenv("FRAMEWORK", "vorp")
+items_table = os.getenv("DB_TABLE", "items")
+
+CONFIG_PATH = os.path.join("config", "config.json")
+USERS_PATH = os.path.join("config", "users.json")
+
+
+lang = os.getenv("LANG", "cs")
+
+translations = {
+    "cs": {
+        "title": "Správa ikon itemů",
+        "search": "Hledat item...",
+        "no_icon": "Žádná ikona",
+        "upload": "Nahrát",
+        "label": "Label",
+        "weight": "Váha",
+        "desc": "Popis",
+        "save": "Uložit",
+        "users": "Uživatelé",
+        "logout": "Odhlásit",
+        "filter": "Pouze bez ikon",
+        "filter_btn": "Filtrovat",
+        "prev": "« Předchozí",
+        "next": "Další »",
+        "page": "Stránka"
+    },
+    "en": {
+        "title": "Item Icon Manager",
+        "search": "Search item...",
+        "no_icon": "No icon",
+        "upload": "Upload",
+        "label": "Label",
+        "weight": "Weight",
+        "desc": "Description",
+        "save": "Save",
+        "users": "Users",
+        "logout": "Logout",
+        "filter": "Only without icons",
+        "filter_btn": "Filter",
+        "prev": "« Previous",
+        "next": "Next »",
+        "page": "Page"
+    }
+}
+
+T = translations[lang]
+
+
+if not os.path.exists(USERS_PATH):
+    users_data = {
+        "admin": pbkdf2_sha256.hash(os.getenv("ADMIN_PASSWORD", "admin"))
+    }
+    os.makedirs("config", exist_ok=True)
+    with open(USERS_PATH, "w") as f:
+        json.dump(users_data, f, indent=2)
+
+if not os.path.exists(CONFIG_PATH):
+    config_data = {
+        "db": {
+            "host": os.getenv("DB_HOST", "localhost"),
+            "port": int(os.getenv("DB_PORT", 3306)),
+            "database": os.getenv("DB_NAME", "test"),
+            "user": os.getenv("DB_USER", "root"),
+            "password": os.getenv("DB_PASSWORD", "")
+        },
+        "upload_dirs": ["/data/main","/data/dev","/data/web"]
+    }
+    os.makedirs("config", exist_ok=True)
+    with open(CONFIG_PATH, "w") as f:
+        json.dump(config_data, f, indent=2)
 
 def load_users():
-    with open('users.json') as f:
+    with open(USERS_PATH) as f:
         return json.load(f)
 
 def save_users(users):
-    with open('users.json', 'w') as f:
+    with open(USERS_PATH, 'w') as f:
         json.dump(users, f, indent=2)
 
 def log_user_action(action, username):
@@ -26,7 +97,7 @@ def is_admin():
     return session.get('user') == 'admin'
 
 # Config
-with open('config.json') as f:
+with open(CONFIG_PATH) as f:
     config = json.load(f)
 
 upload_dirs = config["upload_dirs"]
@@ -80,15 +151,20 @@ def index():
     conn = get_db_connection()
     with conn.cursor() as cur:
         where = "WHERE (item LIKE %s OR label LIKE %s)"
+        if framework == "vorp":
+            where = "WHERE (item LIKE %s OR label LIKE %s)"
+        elif framework == "esx":
+            where = "WHERE (name LIKE %s OR label LIKE %s)"
+        # where = "WHERE (item LIKE %s OR label LIKE %s)"
         params = [f'%{search}%', f'%{search}%']
-
-        if filter_missing:
-            where += " AND (image IS NULL OR image = '')"
 
         cur.execute(f"SELECT COUNT(*) AS count FROM items {where}", params)
         total = cur.fetchone()['count']
-
-        cur.execute(f"SELECT * FROM items {where} ORDER BY id DESC LIMIT %s OFFSET %s", params + [per_page, offset])
+        if framework == "vorp":
+            cur.execute(f"SELECT * FROM {items_table} {where} ORDER BY item ASC LIMIT %s OFFSET %s", params + [per_page, offset])
+        elif framework == "esx":
+            cur.execute(f"SELECT * FROM {items_table} {where} ORDER BY name ASC LIMIT %s OFFSET %s", params + [per_page, offset])
+        
         items = cur.fetchall()
     conn.close()
 
@@ -105,6 +181,12 @@ def index():
     # Pokud filtrujeme chybějící soubory, ověř existenci fyzicky
     if filter_missing:
         items = [item for item in items if not item['image'] or item['image'] not in icons]
+    # pokud je vybrán esx framework tak u každého itemu doplníme do item jeho name tak aby byl kompatibilní s tabulkou items
+    if framework == "esx":
+        for item in items:
+            item['item'] = item['name']
+            # vytvoř image podle name.png
+            item['image'] = f"{item['name']}.png"
 
     has_next = offset + per_page < total
 
@@ -114,7 +196,8 @@ def index():
                            icons=icons,
                            page=page,
                            has_next=has_next,
-                           filter_missing=filter_missing)
+                           filter_missing=filter_missing,
+                            T=T)
 
 
 @app.route('/upload/<item>', methods=['POST'])
@@ -128,8 +211,9 @@ def upload(item):
             os.makedirs(path, exist_ok=True)
             image.save(os.path.join(path, filename))
         conn = get_db_connection()
-        with conn.cursor() as cur:
-            cur.execute("UPDATE items SET image=%s WHERE item=%s", (filename, item))
+        if framework == "vorp":
+            with conn.cursor() as cur:
+                cur.execute("UPDATE %s SET image=%s WHERE item=%s", (items_table, filename, item))
         conn.commit()
         conn.close()
     return redirect(url_for('index'))
@@ -204,5 +288,6 @@ def update_item(item):
 
     return jsonify(success=True)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+# if __name__ == '__main__':
+#     port = int(os.getenv("PORT", 5000))
+#     app.run(host=os.getenv("IP", '0.0.0.0'), port=port)

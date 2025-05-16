@@ -5,5 +5,5 @@ COPY . /app
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 5000
-CMD ["python", "app.py"]
+EXPOSE ${PORT:-5000}
+CMD ["sh", "-c", "gunicorn -b 0.0.0.0:${PORT:-5000} app:app"]

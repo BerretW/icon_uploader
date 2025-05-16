@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+  iconuploader:
+    image: icon-uploader:latest
+
+    volumes:
+      - ./config:/app/config
+      - /data/compose/1/txData/ESXLegacy/resources/[standalone]/ox_inventory/web/images:/data/main
+      - /data/compose/1/txData/ESXLegacy/resources/[standalone]/ox_inventory/web/images:/data/dev
+      - /data/compose/1/txData/ESXLegacy/resources/[standalone]/ox_inventory/web/images:/data/web
+    network_mode: host
+    environment:
+      LANG: en  # or cs
+      ADMIN_PASSWORD: strong_password1
+      DB_HOST: localhost
+      DB_PORT: 3306
+      DB_NAME: database
+      DB_USER: root
+      DB_PASSWORD: @password
+      SECRET: "akshjgakjsha2"
+      IP: "0.0.0.0"
+      PORT: 5000
+      FRAMEWORK: esx

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Správa ikon itemů</title>
+  <title>{{ T.title }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
   <style>
     body {
@@ -30,7 +30,7 @@
 <body>
 <section class="section">
   <div class="container">
-    <h1 class="title has-text-white">Správa ikon itemů</h1>
+    <h1 class="title has-text-white">{{ T.title }}</h1>
 
     <form method="get" class="box">
       <div class="field is-grouped is-grouped-multiline">
@@ -44,11 +44,11 @@
           </label>
         </div>
         <div class="control">
-          <button class="button is-link" type="submit">Filtrovat</button>
+          <button class="button is-link" type="submit">{{ T.filter_btn }}</button>
         </div>
         <div class="control" style="margin-left:auto;">
-          <a class="button is-warning" href="/users">Uživatelé</a>
-          <a class="button is-danger" href="/logout">Odhlásit</a>
+          <a class="button is-warning" href="/users">{{ T.users }}</a>
+          <a class="button is-danger" href="/logout">{{ T.logout }}</a>
         </div>
       </div>
     </form>
@@ -57,7 +57,7 @@
     <nav class="pagination is-centered mb-3" role="navigation">
       <ul class="pagination-list">
         {% if page > 1 %}
-          <li><a class="pagination-previous" href="?search={{ search }}{% if filter_missing %}&filter=missing{% endif %}&page={{ page - 1 }}">« Předchozí</a></li>
+          <li><a class="pagination-previous" href="?search={{ search }}{% if filter_missing %}&filter=missing{% endif %}&page={{ page - 1 }}">« {{ T.prev }}</a></li>
         {% endif %}
         <li>
           <form method="get" style="display:inline-block">
@@ -66,14 +66,14 @@
             <div class="select is-small">
               <select name="page" onchange="this.form.submit()">
                 {% for i in range(1, (page + 5) if has_next else page + 1) %}
-                  <option value="{{ i }}" {% if i == page %}selected{% endif %}>Stránka {{ i }}</option>
+                  <option value="{{ i }}" {% if i == page %}selected{% endif %}>{{ T.page }} {{ i }}</option>
                 {% endfor %}
               </select>
             </div>
           </form>
         </li>
         {% if has_next %}
-          <li><a class="pagination-next" href="?search={{ search }}{% if filter_missing %}&filter=missing{% endif %}&page={{ page + 1 }}">Další »</a></li>
+          <li><a class="pagination-next" href="?search={{ search }}{% if filter_missing %}&filter=missing{% endif %}&page={{ page + 1 }}">{{ T.next }} »</a></li>
         {% endif %}
       </ul>
     </nav>
@@ -102,7 +102,7 @@
               {% if filename and filename in icons %}
                 <img src="/image/{{ filename }}" alt="{{ item.item }}" style="max-height: 48px;">
               {% else %}
-                <span class="tag is-danger">Žádná ikona</span>
+                <span class="tag is-danger">{{ T.no_icon}}</span>
               {% endif %}
             </td>
             <td>

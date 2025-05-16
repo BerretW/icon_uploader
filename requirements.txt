@@ -2,3 +2,4 @@ Flask
 pillow
 pymysql
 passlib
+gunicorn
