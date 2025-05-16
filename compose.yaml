@@ -21,4 +21,4 @@ services:
       SECRET: "akshjgakjsha2"
       IP: "0.0.0.0"
       PORT: 5000
-      FRAMEWORK: esx
+      FRAMEWORK: esx # or vorp
