@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET", "default-dev-key")
 framework = os.getenv("FRAMEWORK", "vorp")
 items_table = os.getenv("DB_TABLE", "items")
-
+order_collumn = os.getenv("ORDER_COLUMN", "label")
 CONFIG_PATH = os.path.join("config", "config.json")
 USERS_PATH = os.path.join("config", "users.json")
 
@@ -161,9 +161,9 @@ def index():
         cur.execute(f"SELECT COUNT(*) AS count FROM items {where}", params)
         total = cur.fetchone()['count']
         if framework == "vorp":
-            cur.execute(f"SELECT * FROM {items_table} {where} ORDER BY item ASC LIMIT %s OFFSET %s", params + [per_page, offset])
+            cur.execute(f"SELECT * FROM {items_table} {where} ORDER BY id DESC LIMIT %s OFFSET %s", params + [per_page, offset])
         elif framework == "esx":
-            cur.execute(f"SELECT * FROM {items_table} {where} ORDER BY name ASC LIMIT %s OFFSET %s", params + [per_page, offset])
+            cur.execute(f"SELECT * FROM {items_table} {where} ORDER BY {order_collumn} DESC LIMIT %s OFFSET %s", params + [per_page, offset])
         
         items = cur.fetchall()
     conn.close()
