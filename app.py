@@ -52,6 +52,17 @@ def save_safecoords(data):
     with open(SAFECOORDS_PATH, "w") as f:
         json.dump(data, f, indent=2)
 
+import logging
+
+LOG_PATH = os.path.join("config", "debug.log")
+os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+
+logging.basicConfig(
+    filename=LOG_PATH,
+    level=logging.DEBUG,
+    format='[%(asctime)s] %(levelname)s: %(message)s',
+    encoding='utf-8'
+)
 
 can_add_item = os.getenv("CAN_ADD_ITEM", "false").lower() == "true"
 
@@ -402,18 +413,17 @@ def characters():
     if search:
         query += """
             AND (
-                LOWER(identifier) LIKE LOWER(%s) OR
-                LOWER(steamname) LIKE LOWER(%s) OR
-                LOWER(firstname) LIKE LOWER(%s) OR
-                LOWER(lastname) LIKE LOWER(%s) OR
+                LOWER(identifier) LIKE %s OR
+                LOWER(steamname) LIKE %s OR
+                LOWER(firstname) LIKE %s OR
+                LOWER(lastname) LIKE %s OR
                 CAST(charidentifier AS CHAR) LIKE %s OR
                 CAST(money AS CHAR) LIKE %s
             )
         """
-        for _ in range(4):
-            params.append(search.lower())
-        for _ in range(2):
-            params.append(f"%{search}%")
+        like_search = f"%{search.lower()}%"
+        params.extend([like_search] * 4)
+        params.extend([f"%{search}%", f"%{search}%"])
 
     if isdead_filter in ["0", "1"]:
         query += " AND isdead = %s"
@@ -453,13 +463,18 @@ def characters():
 @app.route('/characters/update/<int:charidentifier>', methods=['POST'])
 @login_required
 def update_character(charidentifier):
+    logging.debug(f"Zahájena aktualizace charakteru {charidentifier}")
+
     if framework != "vorp":
+        logging.debug("Zrušeno: framework není vorp")
         return abort(403)
 
     identifier = request.form.get("identifier", "").strip()
     health = request.form.get("health", "").strip()
     isdead = int(request.form.get("isdead", 0))
     coords_str = request.form.get("coords", "").strip()
+
+    logging.debug(f"Form data: identifier={identifier}, health={health}, isdead={isdead}, coords={coords_str}")
 
     try:
         vector_part, heading_part = coords_str.split("),")
@@ -469,11 +484,13 @@ def update_character(charidentifier):
         coords_dict = {"x": x, "y": y, "z": z, "heading": heading}
         coords_json = json.dumps(coords_dict)
     except Exception as e:
+        logging.error(f"Chyba parsování coords: {e}")
         return f"<h2 style='color:red'>Chybný formát coords: {e}</h2><a href='/characters'>Zpět</a>"
 
     try:
         health = int(health)
     except ValueError:
+        logging.error("Neplatné zdraví")
         return f"<h2 style='color:red'>Neplatné zdraví</h2><a href='/characters'>Zpět</a>"
 
     conn = get_db_connection()
@@ -483,9 +500,14 @@ def update_character(charidentifier):
             SET identifier=%s, health=%s, isdead=%s, coords=%s
             WHERE charidentifier=%s
         """, (identifier, health, isdead, coords_json, charidentifier))
+        logging.debug(f"Změněno řádků: {cur.rowcount}")
     conn.commit()
     conn.close()
+
+    logging.debug("Aktualizace dokončena")
     return redirect(url_for("characters"))
+
+
 
 @app.route('/safecoords', methods=['GET', 'POST'])
 @login_required
