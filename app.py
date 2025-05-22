@@ -9,6 +9,23 @@ from datetime import datetime
 from flask import jsonify
 
 app = Flask(__name__)
+import time
+
+@app.before_request
+def start_timer():
+    request._start_time = time.time()
+
+@app.after_request
+def log_request(response):
+    if hasattr(request, '_start_time'):
+        duration = time.time() - request._start_time
+        method = request.method
+        path = request.path
+        status = response.status_code
+        user = session.get('user', 'anon')
+        print(f"[{datetime.now().isoformat()}] {method} {path} ({status}) by {user} in {duration:.3f}s")
+    return response
+
 app.secret_key = os.getenv("SECRET", "default-dev-key")
 framework = os.getenv("FRAMEWORK", "vorp")
 items_table = os.getenv("DB_TABLE", "items")
