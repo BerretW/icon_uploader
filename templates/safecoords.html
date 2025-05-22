@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <title>Editor SafeCoords</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
+<body>
+<section class="section">
+  <div class="container">
+    <h1 class="title">Editor bezpečných souřadnic</h1>
+    <a class="button is-light mb-3" href="/">← Zpět</a>
+
+    {% if message %}
+    <div class="notification is-info is-light">{{ message }}</div>
+    {% endif %}
+
+    <form method="post" class="box">
+      <h2 class="subtitle">Přidat novou</h2>
+      <div class="field is-grouped">
+        <div class="control is-expanded">
+          <input class="input is-small" type="text" name="name" placeholder="Název (např. Valentine)" required>
+        </div>
+        <div class="control is-expanded">
+          <input class="input is-small" type="text" name="value" placeholder="vector3(x, y, z), heading" required>
+        </div>
+        <div class="control">
+          <button class="button is-success is-small" name="action" value="add">➕ Přidat</button>
+        </div>
+      </div>
+    </form>
+
+    <table class="table is-fullwidth is-striped is-bordered">
+      <thead>
+        <tr>
+          <th>Název</th>
+          <th>Souřadnice</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for name, coord in safecoords.items() %}
+        <tr>
+          <form method="post">
+            <td>
+              <strong>{{ name }}</strong>
+              <input type="hidden" name="name" value="{{ name }}">
+            </td>
+            <td>
+              <input class="input is-small" type="text" name="value" value="{{ coord }}">
+            </td>
+            <td>
+              <button class="button is-info is-small" name="action" value="update">💾</button>
+              <button class="button is-danger is-small" name="action" value="delete" onclick="return confirm('Smazat {{ name }}?')">🗑️</button>
+            </td>
+          </form>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+</body>
+</html>

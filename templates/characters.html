@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Charaktery</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
+<body>
+<section class="section">
+  <div class="container">
+    <h1 class="title">Správa charakterů</h1>
+    {% if session['user'] == 'admin' %}
+    <a class="button is-warning" href="/safecoords">SafeCoords</a>
+    {% endif %}
+    <a href="/" class="button is-light mb-4">← Zpět</a>
+    <table class="table is-fullwidth is-striped is-bordered">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Steamname</th>
+          <th>Jméno</th>
+          <th>Peníze</th>
+          <th>Identifier</th>
+          <th>Zdraví</th>
+          <th>Mrtvý?</th>
+          <th>Souřadnice (vector3)</th>
+          <th>Heading</th>
+          <th>Akce</th>
+        </tr>
+      </thead>
+      <form method="get" class="box mb-4">
+  <div class="field is-grouped is-grouped-multiline">
+    <div class="control">
+      <input class="input is-small" type="text" name="search" placeholder="Hledat..." value="{{ search }}">
+    </div>
+    <div class="control">
+      <div class="select is-small">
+        <select name="isdead">
+          <option value="">Všichni</option>
+          <option value="0" {% if isdead_filter == '0' %}selected{% endif %}>Živí</option>
+          <option value="1" {% if isdead_filter == '1' %}selected{% endif %}>Mrtví</option>
+        </select>
+      </div>
+    </div>
+    <div class="control">
+      <div class="select is-small">
+        <select name="hp_op">
+          <option value=">" {% if hp_op == '>' %}selected{% endif %}>&gt;</option>
+          <option value="<" {% if hp_op == '<' %}selected{% endif %}>&lt;</option>
+        </select>
+      </div>
+    </div>
+    <div class="control">
+      <input class="input is-small" type="number" name="hp" placeholder="HP" value="{{ hp_filter }}">
+    </div>
+    <div class="control">
+      <button class="button is-small is-info" type="submit">Filtrovat</button>
+    </div>
+  </div>
+</form>
+      <tbody>
+        {% for char in characters %}
+        <tr>
+          <form method="post" action="/characters/update/{{ char.charidentifier }}">
+            <td>{{ char.charidentifier }}</td>
+            <td>{{ char.steamname }}</td>
+            <td>{{ char.firstname }} {{ char.lastname }}</td>
+            <td>{{ char.money }}</td>
+            <td>
+              <input class="input is-small" type="text" name="identifier" value="{{ char.identifier }}">
+              <button class="button is-small is-link mt-1" type="button" onclick="this.previousElementSibling.value='STEAM_0:1:110765751'">Odstavit</button>
+            </td>
+            <td><input class="input is-small" type="number" name="health" value="{{ char.health }}"></td>
+            <td>
+              <div class="select is-small">
+                <select name="isdead">
+                  <option value="0" {% if not char.isdead %}selected{% endif %}>Ne</option>
+                  <option value="1" {% if char.isdead %}selected{% endif %}>Ano</option>
+                </select>
+              </div>
+            </td>
+           <td>
+                <input class="input is-small" type="text" name="coords" value="{{ char.coords_string }}">
+                <div class="select is-small mt-1">
+                    <select onchange="this.previousElementSibling.value = this.value">
+                    <option disabled selected>Bezpečné souřadnice</option>
+                    {% for name, coord in safecoords.items() %}
+                        <option value="{{ coord }}">{{ name }}</option>
+                    {% endfor %}
+                    </select>
+                </div>
+                </td>
+            <td><input class="input is-small" style="width:80px" type="number" step="0.1" name="heading" value="{{ char.heading }}"></td>
+            <td><button class="button is-primary is-small" type="submit">💾</button></td>
+          </form>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+</body>
+</html>
