@@ -282,8 +282,11 @@ def upload(item):
             image.save(os.path.join(path, filename))
         conn = get_db_connection()
         if framework == "vorp":
+            # with conn.cursor() as cur:
+            #     cur.execute("UPDATE %s SET image=%s WHERE item=%s", (items_table, filename, item))
             with conn.cursor() as cur:
-                cur.execute("UPDATE %s SET image=%s WHERE item=%s", (items_table, filename, item))
+                query = f"UPDATE {items_table} SET image=%s WHERE item=%s"
+                cur.execute(query, (filename, item))
         conn.commit()
         conn.close()
     return redirect(url_for('index'))
