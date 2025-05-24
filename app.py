@@ -543,6 +543,57 @@ def safecoords_editor():
 
     return render_template("safecoords.html", safecoords=data, message=message)
 
+@app.route('/blips', methods=['GET', 'POST'])
+@login_required
+def manage_blips():
+    conn = get_db_connection()
+    message = None
+    error = None
+
+    if request.method == 'POST':
+        action = request.form.get("action")
+        text = request.form.get("text", "").strip()
+        blip = request.form.get("blip", "").strip()
+        style = request.form.get("style", "").strip()
+        coords_input = request.form.get("coords", "").strip()
+        blip_id = request.form.get("id")
+
+        # Validuj a serializuj coords jako JSON
+        try:
+            coords_obj = json.loads(coords_input)
+            coords_json = json.dumps(coords_obj)
+        except Exception as e:
+            error = f"Neplatný formát souřadnic: {e}"
+            coords_json = '{"x":0.0,"y":0.0,"z":0.0}'
+
+        try:
+            with conn.cursor() as cur:
+                if action == "add":
+                    cur.execute("""
+                        INSERT INTO aprts_blips (text, blip, style, coords)
+                        VALUES (%s, %s, %s, %s)
+                    """, (text, blip, style, coords_json))
+                    message = "✅ Blip přidán."
+                elif action == "delete":
+                    cur.execute("DELETE FROM aprts_blips WHERE id = %s", (blip_id,))
+                    message = "🗑️ Blip smazán."
+                elif action == "update":
+                    cur.execute("""
+                        UPDATE aprts_blips
+                        SET text=%s, blip=%s, style=%s, coords=%s
+                        WHERE id=%s
+                    """, (text, blip, style, coords_json, blip_id))
+                    message = "💾 Blip aktualizován."
+            conn.commit()
+        except Exception as e:
+            error = f"❌ Chyba při práci s databází: {e}"
+
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM aprts_blips ORDER BY id DESC")
+        blips = cur.fetchall()
+    conn.close()
+
+    return render_template("blips.html", blips=blips, message=message, error=error)
 
 
 
